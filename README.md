@@ -111,7 +111,7 @@ Tokens are passed along with the http header as
 ```
 Authorization   Bearer "token"
 ```
-## building app **NB:** app must be built before testing. 
+## building * app must be built before testing. *
 Run build with
 `npm run build`
 ## Testing
