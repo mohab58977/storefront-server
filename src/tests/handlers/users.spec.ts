@@ -9,11 +9,16 @@ const SECRET = process.env.TOKEN_SECRET as Secret
 
 describe("User Handler", () => {
   const user: User = {
-   
+
     firstname: "Hans",
     lastname: "Meier",
     password: "password123"
   }
+  const newUserData: User = {
+    firstname: 'Lorenz',
+    lastname: 'Meier',
+    password: 'pass123',
+  };
 
   let token: string, userId: number = 1
 
@@ -24,7 +29,18 @@ describe("User Handler", () => {
       expect(res.status).toBe(401)
       done()
     })
+request.get(`/users/${userId}`).then((res) => {
+  expect(res.status).toBe(401);
+  done();
+});
 
+request
+  .put(`/users/${userId}`)
+  .send(user)
+  .then((res) => {
+    expect(res.status).toBe(401);
+    done();
+  });
     request
     .delete(`/users/${userId}`)
     .then((res) => {
@@ -40,11 +56,6 @@ describe("User Handler", () => {
     .then((res) => {
       const {body, status} = res
       token = body.token
-
-  
-
-      // @ts-ignore
-      const {user} = jwt.verify(token, SECRET)
       userId = body.user_id
 
       expect(status).toBe(200)
@@ -62,16 +73,42 @@ describe("User Handler", () => {
       });
   })
 
- 
+ it('gets the read endpoint', (done) => {
+   request
+     .get(`/users/${userId}`)
+     .set('Authorization', 'bearer ' + token)
+     .then((res) => {
+       expect(res.status).toBe(200);
+       done();
+     });
+ });
+
+ it('gets the update endpoint', (done) => {
+   
+
+   request
+     .put(`/users/${userId}`)
+     .send(newUserData)
+     .set('Authorization', 'bearer ' + token)
+     .then((res) => {
+        const { body, status } = res;
+        token = body.token;
+       
+       expect(status).toBe(200);
+
+       done();
+     });
+ });
+
   
 
   it("gets the auth endpoint", (done) => {
     request
       .post('/users/authenticate')
       .send({
-        firstname: user.firstname,
-       lastname: user.lastname,
-        password: user.password,
+        firstname: 'Lorenz',
+        lastname: 'Meier',
+        password:   'pass123'
       })
       .then((res) => {
         expect(res.status).toBe(200);
@@ -95,13 +132,6 @@ describe("User Handler", () => {
   })
 
   it("gets the delete endpoint", (done) => {
-    request.get('/users').then((res) => {
-       ;
-        done();
-      });
-    
-
-
     request
       .delete(`/users/${userId}`)
       .set('Authorization', `Bearer "${token}" `)

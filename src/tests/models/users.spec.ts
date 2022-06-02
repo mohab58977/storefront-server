@@ -48,7 +48,7 @@ describe("User Model", () => {
     const createdUser: Userex = await createUser(user)
  
     const userList = await UserStoreInstance.index()
-
+    
     expect(userList).toEqual([createdUser]);
 await deleteUser(createdUser.user_id!)
     
@@ -67,7 +67,7 @@ await deleteUser(createdUser.user_id!)
   it("authenticates the user with a password", async () => {
     const createdUser: User = await createUser(user)
 
-    const userFromDb = await UserStoreInstance.authenticate(user.firstname,user.lastname, user.password!)
+    const userFromDb = await UserStoreInstance.authenticate(user)
 
     if (userFromDb) {
       const {firstname, lastname} = userFromDb

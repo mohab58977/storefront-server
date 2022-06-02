@@ -7,6 +7,8 @@ import auth from '../middleware/auth';
 
 const userHandlers = (app: express.Application): void => {
   app.get('/users', auth, getAllUsers);
+  app.get('/users/:id', auth, showUser);
+    app.put('/users/:id', auth, update);
   app.post('/users/authenticate', authenticate);
   app.post('/users', createUser);
   app.delete('/users/:id', auth, deleteUser);
@@ -30,11 +32,84 @@ const getAllUsers = async (_req: Request, res: Response): Promise<void> => {
   }
 };
 
+const showUser = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as unknown as number;
+
+    if (id === undefined) {
+      res.status(400);
+      res.send('Missing required parameter :id.');
+      return false;
+    }
+
+    const user: User = await userStore.read(id);
+
+    res.json(user);
+  } catch (e) {
+    res.status(400);
+    res.json(e);
+  }
+};
+
+const update = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as unknown as number;
+    const firstname = req.body.firstname as unknown as string;
+    const lastname = req.body.lastname as unknown as string;
+   const password = req.body.password as unknown as string;
+    console.log(id, firstname, lastname, password);
+    if (
+      firstname === undefined ||
+      lastname === undefined ||
+      password === undefined ||
+      id === undefined
+    ) {
+      res.status(400);
+      res.send(
+        'Some required parameters are missing! eg. :firstname, :lastname, :id'
+      );
+      return false;
+    }
+   const useritem: User = {
+              firstname:firstname,
+              lastname: lastname,
+              password: password,
+            }
+  
+    const updateduser: User = await userStore.update(id, useritem);
+    const token = jwt.sign(
+           {
+             user: {
+               firstname: updateduser.firstname,
+               lastname: updateduser.lastname,
+               id: updateduser.id,
+             },
+           },
+           tokenSecret as string,
+           {
+             expiresIn: '500m', // expires in 500 minutes
+           }
+         );
+         const usertoken = {
+           ...updateduser,
+           token
+         }
+        
+  
+
+    res.json(usertoken);
+  } catch (e) {
+    res.status(400);
+    res.json(e);
+  }
+};
+
 const authenticate = async (req: Request, res: Response): Promise<void> => {
   const firstname = req.body.firstname;
   const lastname = req.body.lastname;
   const password = req.body.password;
 
+   
   if (
     firstname &&
     typeof firstname === 'string' &&
@@ -44,7 +119,12 @@ const authenticate = async (req: Request, res: Response): Promise<void> => {
     typeof password === 'string'
   ) {
     try {
-      const user = await userStore.authenticate(firstname,lastname, password);
+      const useritem: User = {
+        firstname: firstname,
+        lastname: lastname,
+        password: password
+      };
+      const user = await userStore.authenticate(useritem);
 
       if (user) {
         const token = jwt.sign(

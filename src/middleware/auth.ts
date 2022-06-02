@@ -16,8 +16,10 @@ const auth = (
         const authHead: string | undefined = req.headers.authorization;
         
         const token: string = authHead ? authHead.split(' ')[1] : '';
-        const r = token.slice(1, -1);
-        jwt.verify(r, tokenSecret);
+        let firstChar = token.charAt(0);
+        let tokenr : string
+         firstChar === '"' ?  tokenr=  token.slice(1, -1) : tokenr=token;
+        jwt.verify(tokenr, tokenSecret);
         
         return next()
     }

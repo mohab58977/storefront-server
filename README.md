@@ -17,6 +17,7 @@ Here are some of the few packages that were installed.
 `npm i -S express`
 `npm i -D @types/express`
 
+
 #### typescript
 `npm i -D typescript`
 
@@ -25,8 +26,8 @@ Here are some of the few packages that were installed.
 
 
 #### cors
-`npm install --save cors`
-
+`npm install  cors`
+`npm install --save-dev @types/cors`
 #### bcrypt
 `npm -i bcrypt`
 `npm -i -D @types/bcrypt`
@@ -71,8 +72,8 @@ We shall create the dev and test database.
 ### Migrate Database
 Navigate to the root directory and run the command below to migrate the database 
 
-`yarn dev-up`
-
+`npm run dev-up`
+`npm run dev-down`
 
 
 ## Enviromental Variables Set up
@@ -108,7 +109,7 @@ All endpoints are described in the [REQUIREMENT.md](REQUIREMENTS.md) file.
 ## Token and Authentication
 Tokens are passed along with the http header as 
 ```
-Authorization   Bearer <token>
+Authorization   Bearer "token"
 ```
 ## building app **NB:** app must be built before testing. 
 Run build with

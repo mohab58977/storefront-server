@@ -22,11 +22,12 @@ export type Userex = {
 
 };
 
+
 export class UserStore {
   async index(): Promise<User[]> {
     try {
       const conn = await client.connect();
-      const sql = 'SELECT user_id,firstname,lastname,password from users';
+      const sql = 'SELECT user_id,firstname,lastname from users';
       const result = await conn.query(sql);
       conn.release();
       return result.rows;
@@ -46,18 +47,18 @@ export class UserStore {
       console.log(err);
       throw new Error();
     }
-    
   }
-  async update(u: User): Promise<User> {
+  async update(id:number, u: User): Promise<User> {
     try {
       const conn = await client.connect();
-        const sql = 'Insert into users(firstname,lastname,password) values($1,$2,$3) where id=$1 returning *;';
+      const sql =
+        'UPDATE users SET firstname=$1, lastname=$2, password=$3 where user_id = $4 returning user_id,firstname,lastname; ';
 
       const hash: string = bcrypt.hashSync(
         (u.password as string) + pepper,
         parseInt(rounds as string)
       );
-      const result = await conn.query(sql, [u.firstname, u.lastname, hash]);
+      const result = await conn.query(sql, [u.firstname, u.lastname, hash,id]);
       conn.release();
       return result.rows[0];
     } catch (err) {
@@ -68,7 +69,7 @@ export class UserStore {
   async checkcreate(u: User): Promise<User | null> {
     const conn = await client.connect();
     const sql = 'Select * from users where firstname=$1 AND lastname=$2';
-    const result = await conn.query(sql, [u.firstname,u.lastname])
+    const result = await conn.query(sql, [u.firstname, u.lastname]);
 
     if (result.rowCount) {
       const user = result.rows[0] as User;
@@ -80,7 +81,8 @@ export class UserStore {
   async create(u: User): Promise<User> {
     try {
       const conn = await client.connect();
-      const sql = 'Insert into users(firstname,lastname,password) values($1,$2,$3) returning *;';
+      const sql =
+        'Insert into users(firstname,lastname,password) values($1,$2,$3) returning user_id,firstname,lastname;';
 
       const hash: string = bcrypt.hashSync(
         (u.password as string) + pepper,
@@ -95,20 +97,37 @@ export class UserStore {
     }
   }
 
+  async read(id: number): Promise<User> {
+    try {
+      const sql = 'SELECT * FROM users WHERE user_id=($1)';
+      const conn = await client.connect();
+      const { rows } = await conn.query(sql, [id]);
+
+      conn.release();
+
+      return rows[0];
+    } catch (err) {
+      throw new Error(`Could not find user ${id}. ${err}`);
+    }
+  }
+
+  
   async authenticate(
-    firstname: string,
-    lastname: string,
-    password: string
+    { firstname,
+      lastname,
+      password } :User
   ): Promise<User | null> {
     try {
+     // if (!firstname || !lastname || !password) { return null; }
+
       const conn = await client.connect();
       const sql = 'Select * from users where firstname=$1 AND lastname=$2';
-      const result = await conn.query(sql, [firstname,lastname]);
+      const result = await conn.query(sql, [firstname, lastname]);
       conn.release();
 
       if (result.rowCount) {
         const user = result.rows[0] as User;
-        if (bcrypt.compareSync(password + pepper, user.password as string)) {
+        if (bcrypt.compareSync(password! + pepper, user.password as string)) {
           return user;
         }
       }
